@@ -1,92 +1,107 @@
 <template>
-  <section class="w-full h-screen p-[100px] bg-gray-900 overflow-auto">
-    <!-- 顯示區 -->
-    <div class="flex w-full h-auto bg-gray-900 gap-5 flex-wrap mb-5">
-      <!-- 卡片群組編輯區 -->
-      <section class="bg-green-800 p-12 rounded-2xl flex-1">
-        <h1 class="text-4xl font-bold text-white my-8">顯示區</h1>
-        <div class="flex flex-wrap gap-5">
-          <TodoListCard
-            v-for="todoListItem in todoListItemsData"
-            :todoListItem="todoListItem"
-          ></TodoListCard>
-        </div>
-      </section>
-    </div>
-
+  <section class="h-screen w-full overflow-auto bg-gray-900 p-[100px]">
     <!-- 操作區 -->
-    <div class="flex w-full h-auto bg-gray-900 gap-5 flex-wrap">
+    <div class="flex h-auto w-full flex-wrap gap-5 bg-gray-900">
       <!-- 卡片群組編輯區 -->
-      <section class="bg-green-800 p-12 rounded-2xl flex-1">
-        <h1 class="text-4xl font-bold text-white my-8">卡片群組編輯區</h1>
+      <section class="flex-1 rounded-2xl bg-green-800 p-12">
+        <h1 class="my-8 text-4xl font-bold text-white">卡片群組編輯區</h1>
         <div class="flex justify-end">
           <!-- 新增卡片鈕 -->
           <button
-            class="bg-gray-300 p-2 rounded-md mb-3 w-32"
-            @click="pageStatus.isShowEditArea = !pageStatus.isShowEditArea"
+            v-if="pageStatus.mode != 'normal'"
+            class="mb-3 w-32 rounded-md bg-gray-300 p-2"
+            @click="pageStatus.mode = 'normal'"
           >
-            {{ pageStatus.isShowEditArea ? "取消" : "新增一張卡片" }}
+            取消
+          </button>
+          <!-- 新增卡片鈕 -->
+          <button
+            v-else
+            class="mb-3 w-32 rounded-md bg-gray-300 p-2"
+            @click="pageStatus.mode = 'creating'"
+          >
+            進入新增模式
           </button>
         </div>
         <!-- box -->
         <div class="flex flex-wrap gap-5">
           <TodoListCard
-            v-for="todoListItem in todoListItemsData"
+            v-for="(todoListItem, key) in todoListItemsData"
             :todoListItem="todoListItem"
+            :key="key"
+            @click="goToEditing(key)"
           ></TodoListCard>
-          <button class="bg-gray-300 p-2 rounded-md">確定上傳本區卡片</button>
-          <button class="bg-gray-300 p-2 rounded-md">取消</button>
+          <button class="rounded-md bg-gray-300 p-2">確定上傳本區卡片</button>
+          <button class="rounded-md bg-gray-300 p-2">取消</button>
         </div>
       </section>
       <!-- 單張卡片編輯區 -->
-      <section class="bg-green-800 p-12 rounded-2xl flex-1">
-        <h1 class="text-4xl font-bold text-white my-8">編輯區</h1>
+      <section class="flex-1 rounded-2xl bg-green-800 p-12">
+        <h1 class="my-8 text-4xl font-bold text-white">
+          編輯區{{ pageStatus.mode }}
+        </h1>
         <!-- 編輯區 -->
         <div
-          class="bg-slate-300 p-8 rounded-2xl editArea"
-          v-if="pageStatus.isShowEditArea"
+          class="editArea rounded-2xl bg-slate-300 p-8"
+          v-if="pageStatus.mode != 'normal'"
         >
           <div class="flex flex-col gap-y-5">
             <!-- 編輯區欄位 -->
             <div class="flex flex-col gap-y-5">
               <!-- 主題 -->
               <div class="flex">
-                <h2 class="text-xl font-bold text-green-800 mb-2 mr-3">
+                <h2 class="mb-2 mr-3 text-xl font-bold text-green-800">
                   主題:
                 </h2>
                 <input
                   type="text"
-                  class="bg-transparent focus:outline-none flex-1 px-2 bg-green-200 rounded-lg"
+                  class="flex-1 rounded-lg bg-green-200 bg-transparent px-2 focus:outline-none"
                 />
               </div>
               <!-- 內容 -->
               <div class="flex">
-                <h2 class="text-xl font-bold text-green-800 mb-2 mr-3">
+                <h2 class="mb-2 mr-3 text-xl font-bold text-green-800">
                   內容:
                 </h2>
                 <textarea
-                  class="bg-transparent focus:outline-none flex-1 px-2 h-[200px] bg-green-200 rounded-lg"
+                  class="h-[200px] flex-1 rounded-lg bg-green-200 bg-transparent px-2 focus:outline-none"
                 ></textarea>
               </div>
             </div>
             <!-- 編輯區按鈕 -->
             <div class="flex justify-end">
-              <button class="p-2 rounded-md mr-3 bg-green-200 font-bold">
+              <button
+                @click="pageStatus.mode = 'normal'"
+                class="mr-3 rounded-md bg-green-200 p-2 font-bold"
+              >
                 取消
               </button>
-              <button class="text-white p-2 rounded-md bg-green-800 font-bold">
+              <button class="rounded-md bg-green-800 p-2 font-bold text-white">
                 新增
               </button>
             </div>
           </div>
         </div>
       </section>
+      <!-- 顯示區 -->
+      <section class="mb-5 flex h-auto w-full flex-wrap gap-5 bg-gray-900">
+        <!-- 卡片群組編輯區 -->
+        <section class="flex-1 rounded-2xl bg-green-800 p-12">
+          <h1 class="my-8 text-4xl font-bold text-white">顯示區</h1>
+          <div class="flex flex-wrap gap-5">
+            <TodoListCard
+              v-for="todoListItem in todoListItemsData"
+              :todoListItem="todoListItem"
+            ></TodoListCard>
+          </div>
+        </section>
+      </section>
     </div>
   </section>
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from "vue";
+import { reactive } from "vue";
 import TodoListCard from "@/components/TodoListCard.vue";
 
 const todoListItemsData = reactive([
@@ -122,8 +137,16 @@ const todoListItemsData = reactive([
   },
 ]);
 const pageStatus = reactive({
-  isShowEditArea: false,
+  mode: "normal", // normal, editing, creating
 });
+
+function goToEditing(key) {
+  alert(
+    `我要準備編輯第${key + 1}個成員了,它的標題是：${todoListItemsData[key].title}`,
+  );
+
+  pageStatus.mode = "editing";
+}
 </script>
 
 <style scoped></style>
