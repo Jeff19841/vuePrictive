@@ -1,11 +1,16 @@
 <template>
   <section
-    class="flex w-full h-full flex-col items-center justify-center p-[300px] gap-y-10"
+    class="flex h-full w-full flex-col items-center justify-center gap-y-10 p-[300px]"
   >
     <router-link
       to="/TodoListView"
-      class="font-bold text-2xl underline hover:text-blue-600"
+      class="text-2xl font-bold underline hover:text-blue-600"
       >TodoListView</router-link
+    >
+    <router-link
+      to="/TodoListTemplateView"
+      class="text-2xl font-bold underline hover:text-blue-600"
+      >學員練習用</router-link
     >
   </section>
 </template>

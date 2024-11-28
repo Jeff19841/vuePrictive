@@ -7,29 +7,20 @@
       class="bg flex justify-between overflow-hidden px-5 text-2xl font-bold"
     >
       <!--勾選與標題 -->
-      <div class="flex max-w-[60%]">
+      <div class="flex max-w-[60%] gap-3">
         <!-- 勾選 -->
         <label class="pt-1">
-          <!-- TODO v-model -->
-          <input
-            class="mr-3 h-6 w-6 rounded-2xl"
-            type="checkbox"
-            v-model="todoListItem.isClick"
-            v-if="todoListItem.isDisplay !== true"
-          />
+          <!-- v-model -->
+          <input class="h-6 w-6 rounded-2xl" type="checkbox" />
         </label>
         <!-- 標題 -->
-        <div class="line-clamp-1">{{ todoListItem?.title || "XX" }}</div>
+        <div class="line-clamp-1">卡片標題</div>
       </div>
       <!-- 編輯鈕和刪除鈕 -->
-      <div
-        v-if="todoListItem.isDisplay !== true"
-        class="hidden shrink-0 gap-4 group-hover:flex"
-      >
+      <div class="flex shrink-0 gap-4">
         <!-- 編輯鈕 -->
-        <button @click="$emit('editEditArea', 1)">
+        <button>
           <svg
-            xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
             stroke-width="1.5"
@@ -43,8 +34,7 @@
             />
           </svg>
         </button>
-        <!-- 刪除紐 -->
-        <button @click="$emit('deleteCard', 1)">
+        <button>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
@@ -64,16 +54,11 @@
     </div>
     <!-- 內容 -->
     <div class="mb-2 line-clamp-4 overflow-hidden break-words px-5 text-start">
-      {{ todoListItem?.content || "aaa" }}
+      卡片內容
     </div>
   </div>
 </template>
 
-<script setup>
-const props = defineProps({
-  todoListItem: { type: Object },
-  isClick: { type: Boolean, default: false },
-});
-</script>
+<script setup></script>
 
 <style scoped></style>

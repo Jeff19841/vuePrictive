@@ -1,22 +1,22 @@
 <template>
-  <section class="h-screen w-full overflow-auto bg-gray-900 p-[100px]">
+  <section class="h-screen w-full overflow-auto bg-blue-900 p-[100px]">
     <!-- 操作區 -->
-    <div class="flex h-auto w-full flex-wrap gap-5 bg-gray-900">
+    <div class="flex h-auto w-full flex-wrap gap-5">
       <!-- 卡片群組編輯區 -->
       <section class="flex-1 rounded-2xl bg-green-800 p-12">
         <h1 class="my-8 text-4xl font-bold text-white">卡片群組編輯區</h1>
-        <!-- TODO全選/反選 -->
+        <!-- 全選/反選 -->
         <div class="flex justify-between">
           <div class="">
             <button
-              @click="pageAction.selectAll"
               class="mb-3 mr-3 w-16 rounded-md bg-gray-300 p-2"
+              @click="pageAction.selectAll"
             >
               全選
             </button>
             <button
-              @click="pageAction.selectReAll"
               class="mb-3 w-16 rounded-md bg-gray-300 p-2"
+              @click="pageAction.selectDisAll"
             >
               反選
             </button>
@@ -24,18 +24,10 @@
           <!-- 新增mode鈕 -->
           <div class="flex justify-end">
             <button
-              v-if="pageStatus.mode !== 'normal'"
               class="mb-3 w-32 rounded-md bg-gray-300 p-2"
-              @click="pageAction.clearCard"
+              @click="pageAction.isShowCreating"
             >
-              取消
-            </button>
-            <button
-              v-else
-              class="mb-3 w-32 rounded-md bg-gray-300 p-2"
-              @click="pageStatus.mode = 'creating'"
-            >
-              進入新增模式
+              {{ dataStatus.mode === "normal" ? "進入新增模式" : "取消" }}
             </button>
           </div>
         </div>
@@ -43,88 +35,48 @@
         <div class="flex flex-wrap gap-5">
           <TodoListCard
             v-for="(todoListItem, key) in pageData.editItemList"
-            :listItemData="todoListItem"
+            :todoListItem="todoListItem"
             :key="key"
-            @editCard="pageAction.goToEditing(key)"
-            @deleteEditingCard="pageAction.deleteCard(key)"
+            @editEditArea="pageAction.editEditArea(key)"
+            @deleteCard="pageAction.deleteCard(key)"
           >
           </TodoListCard>
         </div>
         <!-- 卡片編輯區確定上傳/取消按鈕 -->
-        <div class="flex justify-end gap-5">
+        <div class="mt-2 flex justify-end gap-5">
           <button
             class="flex rounded-md bg-gray-300 p-2"
-            @click="pageAction.renewDisplayItemList"
+            @click="pageAction.renewDisplayDataList"
           >
             確定上傳本區卡片
           </button>
-          <!-- <button class="rounded-md bg-gray-300 p-2">
-            取消
-          </button> -->
         </div>
       </section>
       <!-- 單張卡片編輯區 -->
       <section class="flex-1 rounded-2xl bg-green-800 p-12">
         <h1 class="my-8 text-4xl font-bold text-white">
-          編輯區{{ pageStatus.showUpCreatingMode }}
+          編輯區:{{ showupMode }}
         </h1>
         <!-- 編輯區 -->
-        <div
-          class="editArea rounded-2xl bg-slate-300 p-8"
-          v-if="pageStatus.mode != 'normal'"
-        >
-          <div class="flex flex-col gap-y-5">
-            <!-- 編輯區欄位 -->
-            <div class="flex flex-col gap-y-5">
-              <!-- 主題 -->
-              <div class="flex">
-                <h2 class="mb-2 mr-3 text-xl font-bold text-green-800">
-                  主題:
-                </h2>
-                <input
-                  type="text"
-                  class="flex-1 rounded-lg bg-green-200 px-2 focus:outline-none"
-                  v-model="pageData.inputData.title"
-                />
-              </div>
-              <!-- 內容 -->
-              <div class="flex">
-                <h2 class="mb-2 mr-3 text-xl font-bold text-green-800">
-                  內容:
-                </h2>
-                <textarea
-                  v-model="pageData.inputData.content"
-                  class="h-[200px] flex-1 rounded-lg bg-green-200 px-2 focus:outline-none"
-                ></textarea>
-              </div>
-            </div>
-            <!-- 編輯區按鈕 -->
-            <div class="flex justify-end">
-              <button
-                @click="clearCard"
-                class="mr-3 rounded-md bg-green-200 p-2 font-bold"
-              >
-                取消
-              </button>
-              <button
-                class="rounded-md bg-green-800 p-2 font-bold text-white"
-                @click="pageAction.finishEditingOrCreating"
-              >
-                完成
-              </button>
-            </div>
-          </div>
+        <div>
+          <!-- 卡片編輯區 -->
+          <EditArea
+            :inputItem="pageData.inputItem"
+            v-if="dataStatus.mode != 'normal'"
+            @finishEditingOrCreating="pageAction.finishEditingOrCreating"
+            @cancelEditArea="pageAction.clearUpEditArea"
+          >
+          </EditArea>
         </div>
       </section>
       <!-- 顯示區 -->
-      <section class="mb-5 flex h-auto w-full flex-wrap gap-5 bg-gray-900">
-        <!-- 卡片群組編輯區 -->
+      <section class="mb-5 flex h-auto w-full flex-wrap gap-5">
         <section class="flex-1 rounded-2xl bg-green-800 p-12">
           <h1 class="my-8 text-4xl font-bold text-white">顯示區</h1>
           <div class="flex flex-wrap gap-5">
             <TodoListCard
               v-for="(showListItem, key) in pageData.displayItemList"
-              :listItemData="showListItem"
+              :todoListItem="showListItem"
               :key="key"
             ></TodoListCard>
           </div>
@@ -135,8 +87,10 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref } from "vue";
+import EditArea from "@/components/EditArea.vue";
 import TodoListCard from "@/components/TodoListCard.vue";
+import { computed, onMounted, reactive } from "vue";
+
 // 來自資料庫的資料(不能更動)
 const todoListItemsData = [
   {
@@ -171,92 +125,75 @@ const todoListItemsData = [
   },
 ];
 // ============DATA============
+// 資料區
 const pageData = reactive({
   editItemList: [],
   displayItemList: [],
-  inputData: {
-    id: 0,
+  inputItem: {
+    id: "",
     title: "",
     content: "",
   },
 });
-
-// 初始化資料
+// 初始化資料新增內容
 pageData.editItemList = todoListItemsData.map((item) => {
-  return {
-    ...item,
-    isDisplay: false,
-    isClick: false,
-  };
+  return { ...item, isDisplay: false, isClick: false };
+});
+const showupMode = computed(() => {
+  if (dataStatus.mode == "normal") return "";
+  if (dataStatus.mode == "creating") return "新增模式";
+  return "編輯模式";
 });
 
 // ============Status============
-const pageStatus = reactive({
-  mode: "normal", //normal,editing,creating
-  showUpCreatingMode: computed(() => {
-    if (pageStatus.mode === "normal") return "";
-    else if (pageStatus.mode === "editing") return ":編輯模式";
-    else return ":新增模式";
-  }),
-});
+const dataStatus = reactive({ mode: "normal" }); //normal, editing, creating
 
 // ============functions============
 const pageAction = reactive({
   // 清空
-  clearCard() {
-    pageStatus.mode = "normal";
-    pageData.inputData.id = 0;
-    pageData.inputData.title = "";
-    pageData.inputData.content = "";
+  clearUpEditArea() {
+    pageData.inputItem.title = "";
+    pageData.inputItem.content = "";
+    dataStatus.mode = "normal";
   },
-  //   編輯模式資料
-  goToEditing: (key) => {
-    const selectedCard = pageData.editItemList[key];
-    // TODO  why!!??
-    // pageData.inputData.id = selectedCard.id;
-    // pageData.inputData.title = selectedCard.title;
-    // pageData.inputData.content = selectedCard.content;
-    pageData.inputData = { ...selectedCard };
-
-    pageStatus.mode = "editing";
-  },
-  // 確定編輯/新增判斷
+  //   編輯區完成紐
   finishEditingOrCreating() {
-    if (pageStatus.mode === "creating") {
+    if (dataStatus.mode == "creating") {
       pageData.editItemList.push({
-        // TODO +1 ?? why!!??
         id: pageData.editItemList.length + 1,
-        title: pageData.inputData.title,
-        content: pageData.inputData.content,
+        title: pageData.inputItem.title,
+        content: pageData.inputItem.content,
       });
-    } else if (pageStatus.mode === "editing") {
+    } else {
       const index = pageData.editItemList.findIndex(
-        (item) => item.id === pageData.inputData.id,
+        (item) => item.id === pageData.inputItem.id,
       );
-      pageData.editItemList[index] = {
-        ...pageData.inputData,
-      };
+      pageData.editItemList[index] = { ...pageData.inputItem };
     }
-    pageAction.clearCard();
+    pageAction.clearUpEditArea();
   },
-  // 刪除卡片
+  //   卡片上編輯紐
+  editEditArea(key) {
+    pageData.inputItem = { ...pageData.editItemList[key] };
+    dataStatus.mode = "editing";
+  },
+  //   確定刪除
   deleteCard(key) {
-    const confirmed = confirm("確定刪除?");
-    if (confirmed) {
+    let isConfirmed = confirm("確定刪除");
+    if (isConfirmed) {
       pageData.editItemList.splice(key, 1);
+      this.clearUpEditArea();
     }
   },
-  // 更新顯示區
-  renewDisplayItemList() {
-    // TODO  why!!?? 更新上傳條件
-    // 擴充todoListItemsData為formatShowListItemData
+  //   更新顯示區
+  renewDisplayDataList() {
     let formattedEditItemList = pageData.editItemList.map((item) => {
       return { ...item, isDisplay: true };
     });
-
     formattedEditItemList = formattedEditItemList.filter((item) => {
       return item.isClick == true;
     });
+    console.log(formattedEditItemList);
 
     pageData.displayItemList.splice(
       0,
@@ -264,24 +201,27 @@ const pageAction = reactive({
       ...formattedEditItemList,
     );
   },
-  // TODO  why!!??why!!??why!!??why!!??why!!??
-  selectAll: () => {
+  //   全選
+  selectAll() {
     pageData.editItemList = pageData.editItemList.map((item) => {
-      return {
-        ...item,
-        isClick: true,
-      };
+      return { ...item, isClick: true };
     });
   },
-  selectReAll: () => {
+  //   反選
+  selectDisAll() {
     pageData.editItemList = pageData.editItemList.map((item) => {
-      return {
-        ...item,
-        isClick: !item.isClick,
-      };
+      return { ...item, isClick: !item.isClick };
     });
+  },
+  //   進入新增/取消紐
+  isShowCreating() {
+    if (dataStatus.mode == "normal") {
+      dataStatus.mode = "creating";
+    } else {
+      pageAction.clearUpEditArea();
+    }
   },
 });
 </script>
 
-<style scoped></style>
+<style lang="scss" scoped></style>
