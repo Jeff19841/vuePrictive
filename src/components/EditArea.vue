@@ -25,13 +25,13 @@
       <!-- 編輯區按鈕 -->
       <div class="flex justify-end">
         <button
-          @click="$emit('cancelEditArea', 1)"
+          @click="$emit('cancelEditArea')"
           class="mr-3 rounded-md bg-green-200 p-2 font-bold"
         >
           取消
         </button>
         <button
-          @click="$emit('finishEditingOrCreating', 1)"
+          @click="$emit('finishEditingOrCreating')"
           class="rounded-md bg-green-800 p-2 font-bold text-white"
         >
           完成
@@ -40,16 +40,19 @@
     </div>
   </div>
 </template>
-<script setup>
-const props = defineProps({
-  inputItem: {
-    type: Object,
-    default: {
-      id: "default",
-      title: "default",
-      content: "default",
-    },
-  },
-});
+<script setup lang="ts">
+import { reactive } from "vue";
+
+interface InputItem {
+  id: number;
+  title: string;
+  content: string;
+}
+const props = defineProps<{ inputItem: InputItem }>();
+
+const emit = defineEmits<{
+  (e: "cancelEditArea"): void;
+  (e: "finishEditingOrCreating"): void;
+}>();
 </script>
 <style></style>

@@ -10,7 +10,6 @@
       <div class="flex max-w-[60%]">
         <!-- 勾選 -->
         <label class="pt-1">
-          <!-- TODO v-model -->
           <input
             class="mr-3 h-6 w-6 rounded-2xl"
             type="checkbox"
@@ -69,7 +68,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 const props = defineProps({
   todoListItem: { type: Object },
   isClick: { type: Boolean, default: false },

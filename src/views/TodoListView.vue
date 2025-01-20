@@ -1,7 +1,8 @@
 <template>
   <section class="h-screen w-full overflow-auto bg-blue-900 p-[100px]">
     <!-- 操作區 -->
-    <div class="flex h-auto w-full flex-wrap gap-5">
+    <!-- TODO flex -->
+    <div class="h-auto w-full flex-wrap gap-5">
       <!-- 卡片群組編輯區 -->
       <section class="flex-1 rounded-2xl bg-green-800 p-12">
         <h1 class="my-8 text-4xl font-bold text-white">卡片群組編輯區</h1>
@@ -86,22 +87,43 @@
   </section>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import EditArea from "@/components/EditArea.vue";
 import TodoListCard from "@/components/TodoListCard.vue";
-import { computed, onMounted, reactive } from "vue";
-
+import { computed, reactive } from "vue";
+// ============定義資料結構============
+interface TodoListItem {
+  id: number;
+  title: string;
+  content: string;
+  isDisplay?: boolean;
+  isClick?: boolean;
+}
+interface InputItem {
+  id: number;
+  title: string;
+  content: string;
+}
+interface pageData {
+  editItemList: TodoListItem;
+  displayItemList: TodoListItem;
+  inputItem: InputItem;
+}
+interface DataStatus {
+  mode: "normal" | "editing" | "creating";
+}
 // 來自資料庫的資料(不能更動)
 const todoListItemsData = [
   {
     id: 1,
-    title: "動作 ",
+    title: "動作",
     content:
       "Lorem ipsum dolor sit amet consectetur adipisicing elit. Et beatae eaque odio suscipit eos consectetur, molestiae unde totam a sint cumque libero? Autem quae laboriosam enim similique exercitationem eaque iusto.",
   },
   {
     id: 2,
     title: "黑幫",
+    ti: "ji3",
     content:
       "Lorem ipsum dolor sit amet consectetur adipisicing elit. Et beatae eaque odio suscipit eos consectetur, molestiae unde totam a sint cumque libero? Autem quae laboriosam enim similique exercitationem ",
   },
@@ -113,7 +135,7 @@ const todoListItemsData = [
   },
   {
     id: 4,
-    title: "超級英雄",
+    title: "喜劇",
     content:
       "Lorem ipsum dolor sit amet consectetur adipisicing elit. Et beatae eaque odio suscipit eos consectetur, molestiae unde totam a sint cumque libero? Autem quae laboriosam enim similique exercitationem",
   },
@@ -126,11 +148,22 @@ const todoListItemsData = [
 ];
 // ============DATA============
 // 資料區
-const pageData = reactive({
+interface PageData {
+  editItemList: EditableItem[];
+  displayItemList: InputItem[];
+  inputItem: InputItem;
+}
+
+interface EditableItem extends InputItem {
+  isDisplay: boolean;
+  isClick: boolean;
+}
+
+const pageData = reactive<PageData>({
   editItemList: [],
   displayItemList: [],
   inputItem: {
-    id: "",
+    id: 0,
     title: "",
     content: "",
   },
@@ -149,36 +182,48 @@ const showupMode = computed(() => {
 const dataStatus = reactive({ mode: "normal" }); //normal, editing, creating
 
 // ============functions============
-const pageAction = reactive({
+const pageAction = {
   // 清空
   clearUpEditArea() {
     pageData.inputItem.title = "";
     pageData.inputItem.content = "";
     dataStatus.mode = "normal";
   },
-  //   編輯區完成紐
-  finishEditingOrCreating() {
-    if (dataStatus.mode == "creating") {
-      pageData.editItemList.push({
-        id: pageData.editItemList.length + 1,
-        title: pageData.inputItem.title,
-        content: pageData.inputItem.content,
-      });
+
+  // 編輯模式更新
+  updateItemList(item: EditableItem) {
+    const indexId = pageData.editItemList.findIndex((i) => i.id === item.id);
+    // findIndex找到不存在的值會return -1
+    if (indexId !== -1) {
+      pageData.editItemList[indexId] = item;
     } else {
-      const index = pageData.editItemList.findIndex(
-        (item) => item.id === pageData.inputItem.id,
-      );
-      pageData.editItemList[index] = { ...pageData.inputItem };
+      pageData.editItemList.push(item);
     }
+  },
+
+  finishEditingOrCreating() {
+    const newItem: EditableItem = {
+      id:
+        dataStatus.mode === "creating"
+          ? pageData.editItemList.length + 1
+          : pageData.inputItem.id,
+      title: pageData.inputItem.title,
+      content: pageData.inputItem.content,
+      isDisplay: false,
+      isClick: false,
+    };
+    pageAction.updateItemList(newItem);
     pageAction.clearUpEditArea();
   },
+
   //   卡片上編輯紐
-  editEditArea(key) {
+  editEditArea(key: number) {
     pageData.inputItem = { ...pageData.editItemList[key] };
     dataStatus.mode = "editing";
   },
+
   //   確定刪除
-  deleteCard(key) {
+  deleteCard(key: number) {
     let isConfirmed = confirm("確定刪除");
     if (isConfirmed) {
       pageData.editItemList.splice(key, 1);
@@ -187,18 +232,14 @@ const pageAction = reactive({
   },
   //   更新顯示區
   renewDisplayDataList() {
-    let formattedEditItemList = pageData.editItemList.map((item) => {
-      return { ...item, isDisplay: true };
-    });
-    formattedEditItemList = formattedEditItemList.filter((item) => {
-      return item.isClick == true;
-    });
-    console.log(formattedEditItemList);
+    const filteredList = pageData.editItemList
+      .filter((item) => item.isClick)
+      .map((item) => ({ ...item, isDisplay: true }));
 
     pageData.displayItemList.splice(
       0,
       pageData.displayItemList.length,
-      ...formattedEditItemList,
+      ...filteredList,
     );
   },
   //   全選
@@ -218,10 +259,10 @@ const pageAction = reactive({
     if (dataStatus.mode == "normal") {
       dataStatus.mode = "creating";
     } else {
-      pageAction.clearUpEditArea();
+      this.clearUpEditArea();
     }
   },
-});
+};
 </script>
 
 <style lang="scss" scoped></style>

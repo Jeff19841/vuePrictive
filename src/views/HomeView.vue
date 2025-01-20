@@ -12,6 +12,11 @@
       class="text-2xl font-bold underline hover:text-blue-600"
       >學員練習用</router-link
     >
+    <router-link
+      to="/TsPractice"
+      class="text-2xl font-bold underline hover:text-blue-600"
+      >TS練習用</router-link
+    >
   </section>
 </template>
 
